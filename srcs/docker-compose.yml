@@ -1,0 +1,48 @@
+version: '3'
+
+networks:
+  Inception-network:
+  
+services:
+  mariadb:
+    image: mariadb:latest
+    container_name: mariadb
+    volumes:
+      - MariaDB:/var/lib/mysql
+    build:
+      context: requirements/mariadb
+      dockerfile: Dockerfile
+    networks:
+      - Inception-network
+  wordpress:
+    image: wordpress:latest
+    container_name: wordpress
+    build:
+      context: requirements/wordpress
+      dockerfile: Dockerfile
+    volumes:
+      - WordPress:/var/www/html
+    networks:
+      - Inception-network
+    depends_on:
+      - mariadb
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    build:
+      context: requirements/nginx
+      dockerfile: Dockerfile
+    volumes:
+      - WordPress:/var/www/html
+    ports:
+      - "443:443"
+    networks:
+      - Inception-network
+    depends_on:
+      - wordpress
+
+volumes:
+  WordPress:
+    name: Wordpress
+  MariaDB:
+    name: MariDB

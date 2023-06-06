@@ -2,8 +2,8 @@ FROM debian:buster
 
 EXPOSE 9000
 
-RUN apt update -y && apt upgrade -y && apt-get install -y wget php7.3\
- php-fpm7.3\
+RUN apt update -y && apt upgrade -y && apt-get install -y wget php7.4\
+ php-fpm\
  php-mysql\
  mariadb-client
 
@@ -11,20 +11,24 @@ RUN wget https://fr.wordpress.org/wordpress-6.0-fr_FR.tar.gz -P /var/www
 
 RUN cd /var/www && tar -xzf wordpress-6.0-fr_FR.tar.gz && rm wordpress-6.0-fr_FR.tar.gz
 
-RUN		chown -R root:root /var/www/wordpress
+RUN mv /var/www/wordpress /var/www/html
+RUN	chown -R www-data:www-data /var/www/html
 
+RUN mkdir -p /run/php/
 COPY ./conf/www.conf  /etc/php/7.4/fpm/pool.d/www.conf
 
 RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
 
-RUN chmod +x wp-cli.phar
+RUN chmod +x wp-cli.phar && mv wp-cli.phar /usr/local/bin/
 
-RUN mv wp-cli.phar /usr/local/bin/wp
+COPY ./tools/auto_config.sh /tmp/
 
-COPY ./tools/auto_config.sh /tmp/setup.sh
+RUN chmod +x /tmp/auto_config.sh
 
-RUN chmod +x /tmp/setup.sh
+COPY ./tools/entrypoint.sh /tmp/entrypoint.sh
+RUN chmod +x /tmp/entrypoint.sh
 
-#ENTRYPOINT [ "sh","/tmp/setup.sh" ]
 
-CMD ["/usr/sbin/php-fpm7.3", "--nodaemonize"]
+ENTRYPOINT ["/tmp/auto_config.sh" ]
+CMD ["/usr/sbin/php-fpm7.4","-F"]
+
